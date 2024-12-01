@@ -20,7 +20,7 @@ function Wallet() {
                 {sensors.map((item) => {
                     return (
                         <div key={item.sensorType.concat(item.sensorID.toString())}>
-                            {item.sensorType.concat(item.sensorID.toString())}
+                            {item.sensorType.concat(item.sensorID.toString())}: {item.balance}
                         </div>
                     )      
                 })}

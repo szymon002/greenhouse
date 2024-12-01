@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace GreenHouse.Controllers;
 
@@ -86,14 +87,29 @@ public class SensorDataController : ControllerBase
     }
 
     [HttpGet("balance")]
-    public async Task<IActionResult> GetAccountBalance([FromQuery] string sensorType, [FromQuery] int sensorId)
+    public async Task<IActionResult> GetAccountBalance()
     {
-        if (!WalletAddress.AddressMap.ContainsKey(Tuple.Create(sensorType, sensorId)))
-        {
-            return NotFound($"No wallet address found for sensorType: {sensorType}, sensorId: {sensorId}");
-        }
-        var walletAddress = WalletAddress.AddressMap[Tuple.Create(sensorType, sensorId)];
+        var sensorMessages = new List<object>();
 
-        return Ok(await TokenService.GetTokenBalanceOnAccount(walletAddress));
+        foreach (var entry in WalletAddress.AddressMap)
+        {
+            var sensorKey = entry.Key;
+            var sensorTyped = sensorKey.Item1;
+            var sensorId = sensorKey.Item2;
+            var lastValue = entry.Value;
+
+            var sensorMessage = new
+            {
+                sensorType = sensorTyped,
+                sensorID = sensorId,
+                balance = await TokenService.GetTokenBalanceOnAccount(lastValue),
+            };
+
+            sensorMessages.Add(sensorMessage);
+        }
+
+        string jsonString = JsonSerializer.Serialize(sensorMessages);
+
+        return Ok(jsonString);
     }
 }
