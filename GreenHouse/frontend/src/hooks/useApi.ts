@@ -18,6 +18,12 @@ interface sensorData{
     sensorID: number
 }
 
+interface Sensor{
+    sensorID: number,
+    sensorType: string,
+    balance: number
+}
+
 const makeQueryUrl = (url: string, props: getSensorDataProps) => {
     let changed = false;
     if(props.sensorId !== undefined){
@@ -64,5 +70,14 @@ const exportCSV = (props: getSensorDataProps) => {
     link.remove();
 }
 
-export {getSensorData, exportJSON, exportCSV};
-export type {sensorData};
+const getSensorWallet = async () => {
+    const url = "http://localhost:5173/api/sensordata/balance"
+    const response = await axios.get<Sensor[]>(url);
+    if(response.status == 200){
+        return response.data;
+    }
+    throw new Error("Failed to fetch");
+}
+
+export {getSensorData, exportJSON, exportCSV, getSensorWallet};
+export type {sensorData, Sensor};
