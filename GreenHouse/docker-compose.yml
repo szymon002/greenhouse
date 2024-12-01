@@ -10,6 +10,9 @@ services:
         - "5001:80"
       depends_on:
         - mongodb
+      environment:
+        ETHEREUM_NODE_URL: ${ETHEREUM_NODE_URL}
+        ACCOUNT_SECRET_KEY: ${ACCOUNT_SECRET_KEY}
 
   mosquitto:
     image: eclipse-mosquitto:latest

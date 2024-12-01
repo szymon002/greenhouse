@@ -1,3 +1,4 @@
+using GreenHouse.Services;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using System;
@@ -56,9 +57,9 @@ public class SensorDataController : ControllerBase
         if (sensorId.HasValue)
             filter &= Builders<SensorData>.Filter.Eq(x => x.SensorID, sensorId.Value);
         var result = await _sensorDataCollection.Find(filter).ToListAsync();
-        
+
         var csv = "SensorType,Value,Timestamp\n" + string.Join("\n", result.Select(d => $"{d.SensorType},{d.Value},{d.Timestamp}"));
-        
+
         return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", "sensor_data.csv");
     }
 
@@ -80,7 +81,19 @@ public class SensorDataController : ControllerBase
             filter &= Builders<SensorData>.Filter.Eq(x => x.SensorID, sensorId.Value);
 
         var result = await _sensorDataCollection.Find(filter).ToListAsync();
-        
+
         return Ok(result);
+    }
+
+    [HttpGet("balance")]
+    public async Task<IActionResult> GetAccountBalance([FromQuery] string sensorType, [FromQuery] int sensorId)
+    {
+        if (!WalletAddress.AddressMap.ContainsKey(Tuple.Create(sensorType, sensorId)))
+        {
+            return NotFound($"No wallet address found for sensorType: {sensorType}, sensorId: {sensorId}");
+        }
+        var walletAddress = WalletAddress.AddressMap[Tuple.Create(sensorType, sensorId)];
+
+        return Ok(await TokenService.GetTokenBalanceOnAccount(walletAddress));
     }
 }
