@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react"
-import { getSensorData, getSensorWallet, Sensor, sensorData } from "../hooks/useApi"
+import { getSensorWallet, Sensor } from "../hooks/useApi"
 
 function Wallet() {
     const [sensors, setSensors] = useState<Sensor[]>([])
+    const [loading, setLoading] = useState<boolean>(false)
     
     useEffect(() => {
         setAllSensors();
     }, [])
     
     const setAllSensors = async () => {
+        setLoading(true)
         const data: Sensor[] = await getSensorWallet()
         setSensors(data);
+        setLoading(false)
     }
     
     
@@ -30,7 +33,7 @@ function Wallet() {
     
     return (
         <div>
-            {render()}
+            {loading ? "loading...": render()}
         </div>
     )
 }

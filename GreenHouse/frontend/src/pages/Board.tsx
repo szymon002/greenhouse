@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react"
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../redux/store";
+import { setConnectionStatus, setData } from "../redux/socketSlice";
 
 interface socketData{
     SensorType: string,
@@ -8,51 +11,46 @@ interface socketData{
 }
 
 function Board() {    
-    const [data, setData] = useState<socketData[]>([])
+    const dispatch = useDispatch<AppDispatch>();
+    const data = useSelector((state: RootState) => state.socket.data);
+    const isConnected = useSelector((state: RootState) => state.socket.isConnected);
+    const [socketRef, setSocketRef] = useState<WebSocket | null>(null)
+    
     useEffect(() => {
-      const socket = new WebSocket("ws://localhost:5001/api/websocket/connect")
-      
-      socket.onopen = () => {
-        console.log('WebSocket connected');
-      };
+      if(!isConnected){
+        dispatch(setConnectionStatus(true));
+        const socket = new WebSocket('ws://localhost:5001/api/websocket/connect');
+        setSocketRef(socket);
+
+        socket.onmessage = (event) => {
+            const msgData: socketData[] = JSON.parse(event.data);
+            dispatch(setData(msgData));
+        };
   
-      socket.onmessage = (event) => {
-        const msgData: socketData[] = JSON.parse(event.data)
-        setData(msgData)
-      };
-  
-      socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-  
-      socket.onclose = () => {
-        console.log('WebSocket disconnected');
-      };
-      return () => {
-        socket.close()
+        window.onbeforeunload = () => {
+            socketRef?.close();
+            dispatch(setConnectionStatus(false))
+        };
       }
-    }, [])
+
+  }, []);
     
     const render = () => {
-        return(
-            <>
-                {data.map((item) => {
-                    return(
-                    <div className="flex flex-row" key={item.SensorType.concat(item.SensorID.toString())}>
-                        <div>
-                            Name: {item.SensorType.concat(item.SensorID.toString())}
-                        </div>
-                        <div>
-                            Value: {item.LastValue}
-                        </div>
-                        <div>
-                            Average value: {item.AverageValue}
-                        </div>                        
-                    </div>)
-                })}
-            </>
-        )
-    }
+      return (
+          <>
+              {data.map((item) => (
+                  <div
+                      className="flex flex-row"
+                      key={item.SensorType.concat(item.SensorID.toString())}
+                  >
+                      <div>Name: {item.SensorType.concat(item.SensorID.toString())}</div>
+                      <div>Value: {item.LastValue}</div>
+                      <div>Average value: {item.AverageValue}</div>
+                  </div>
+              ))}
+          </>
+      );
+  };
     
     return (
         <div>
