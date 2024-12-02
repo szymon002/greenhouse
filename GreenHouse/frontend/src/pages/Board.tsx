@@ -33,7 +33,7 @@ function Board() {
         };
       }
 
-  }, [dispatch]);
+  }, []);
     
     const render = () => {
       return (

@@ -43,7 +43,7 @@ def send_data(target_sensor=None, target_value=None):
 
         client.publish("greenhouse/sensors", message)
         print(f"Sent: {message}")
-        time.sleep(random.uniform(0.3, 1))
+        time.sleep(random.uniform(1, 5))
 
 
 def main():
