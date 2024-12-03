@@ -20,7 +20,14 @@ public class SensorDataController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] string? sensorType, [FromQuery] DateTime? start, [FromQuery] DateTime? end, [FromQuery] int? sensorId)
+    public async Task<IActionResult> Get(
+                                        [FromQuery] string? sensorType, 
+                                        [FromQuery] DateTime? start, 
+                                        [FromQuery] DateTime? end, 
+                                        [FromQuery] int? sensorId,
+                                        [FromQuery] string? sortBy = "Timestamp",
+                                        [FromQuery] string? sortOrder =  "asc"
+    )
     {
         var filter = Builders<SensorData>.Filter.Empty;
 
@@ -36,13 +43,22 @@ public class SensorDataController : ControllerBase
         if (sensorId.HasValue)
             filter &= Builders<SensorData>.Filter.Eq(x => x.SensorID, sensorId.Value);
 
-        var result = await _sensorDataCollection.Find(filter).ToListAsync();
+        var sort = GetSort(sortBy, sortOrder);
+        var result = await _sensorDataCollection.Find(filter).Sort(sort).ToListAsync();
 
         return Ok(result);
     }
 
     [HttpGet("export/csv")]
-    public async Task<IActionResult> ExportCsv([FromQuery] string? sensorType, [FromQuery] DateTime? start, [FromQuery] DateTime? end, [FromQuery] int? sensorId)
+    public async Task<IActionResult> ExportCsv(
+                                                [FromQuery] string? sensorType, 
+                                                [FromQuery] DateTime? start, 
+                                                [FromQuery] DateTime? end, 
+                                                [FromQuery] int? sensorId,
+                                                [FromQuery] string? sortBy = "Timestamp",
+                                                [FromQuery] string? sortOrder =  "asc"
+                                                
+    )
     {
         var filter = Builders<SensorData>.Filter.Empty;
 
@@ -57,7 +73,9 @@ public class SensorDataController : ControllerBase
 
         if (sensorId.HasValue)
             filter &= Builders<SensorData>.Filter.Eq(x => x.SensorID, sensorId.Value);
-        var result = await _sensorDataCollection.Find(filter).ToListAsync();
+
+        var sort = GetSort(sortBy, sortOrder);
+        var result = await _sensorDataCollection.Find(filter).Sort(sort).ToListAsync();
 
         var csv = "SensorType,Value,Timestamp\n" + string.Join("\n", result.Select(d => $"{d.SensorType},{d.Value},{d.Timestamp}"));
 
@@ -65,7 +83,14 @@ public class SensorDataController : ControllerBase
     }
 
     [HttpGet("export/json")]
-    public async Task<IActionResult> ExportJson([FromQuery] string? sensorType, [FromQuery] DateTime? start, [FromQuery] DateTime? end, [FromQuery] int? sensorId)
+    public async Task<IActionResult> ExportJson(
+                                                [FromQuery] string? sensorType, 
+                                                [FromQuery] DateTime? start, 
+                                                [FromQuery] DateTime? end, 
+                                                [FromQuery] int? sensorId,
+                                                [FromQuery] string? sortBy = "Timestamp",
+                                                [FromQuery] string? sortOrder =  "asc"
+    )
     {
         var filter = Builders<SensorData>.Filter.Empty;
 
@@ -81,7 +106,8 @@ public class SensorDataController : ControllerBase
         if (sensorId.HasValue)
             filter &= Builders<SensorData>.Filter.Eq(x => x.SensorID, sensorId.Value);
 
-        var result = await _sensorDataCollection.Find(filter).ToListAsync();
+        var sort = GetSort(sortBy, sortOrder);
+        var result = await _sensorDataCollection.Find(filter).Sort(sort).ToListAsync();
 
         return Ok(result);
     }
@@ -112,4 +138,19 @@ public class SensorDataController : ControllerBase
 
         return Ok(jsonString);
     }
+
+    private static SortDefinition<SensorData> GetSort(string? sortBy, string? sortOrder)
+{
+    var builder = Builders<SensorData>.Sort;
+    var isDescending = string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase);
+
+    return sortBy?.ToLower() switch
+    {
+        "sensortype" => isDescending ? builder.Descending(x => x.SensorType) : builder.Ascending(x => x.SensorType),
+        "value" => isDescending ? builder.Descending(x => x.Value) : builder.Ascending(x => x.Value),
+        "timestamp" => isDescending ? builder.Descending(x => x.Timestamp) : builder.Ascending(x => x.Timestamp),
+        "sensorid" => isDescending ? builder.Descending(x => x.SensorID) : builder.Ascending(x => x.SensorID),
+        _ => builder.Ascending(x => x.Timestamp),
+    };
+}
 }

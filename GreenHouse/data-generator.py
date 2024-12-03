@@ -15,9 +15,9 @@ sensor_ranges = {
 
 # 0 -> generowanie danych dla konkretnego sensora
 # 1 -> generowanie danych num_of_generations razy
-one_time_generated = 0
+one_time_generated = 1
 sensor_type = "Temperature"
-sensor_id = 0
+sensor_id = 3
 sensor_value = 25.32
 
 num_of_generations = 10
@@ -26,24 +26,33 @@ sensors = [{"type": sensor_type, "id": i} for sensor_type in sensor_ranges for i
 
 
 def send_data(target_sensor=None, target_value=None):
-    for sensor in sensors:
-        if target_sensor and sensor["type"] == target_sensor["type"] and sensor["id"] == target_sensor["id"]:
-            value = target_value
-        else:
-            value_range = sensor_ranges[sensor["type"]]
-            value = round(random.uniform(*value_range), 2)
-
+    if target_sensor and target_value:
+        value = target_value
         timestamp = time.time()
         message = json.dumps({
-            "SensorType": sensor["type"],
-            "SensorID": sensor["id"],
+            "SensorType": target_sensor["type"],
+            "SensorID": target_sensor["id"],
             "Value": value,
             "Timestamp": timestamp
         })
-
         client.publish("greenhouse/sensors", message)
         print(f"Sent: {message}")
-        time.sleep(random.uniform(1, 5))
+    else:
+        for sensor in sensors:
+            value_range = sensor_ranges[sensor["type"]]
+            value = round(random.uniform(*value_range), 2)
+
+            timestamp = time.time()
+            message = json.dumps({
+                "SensorType": sensor["type"],
+                "SensorID": sensor["id"],
+                "Value": value,
+                "Timestamp": timestamp
+            })
+
+            client.publish("greenhouse/sensors", message)
+            print(f"Sent: {message}")
+            time.sleep(random.uniform(1, 5))
 
 
 def main():

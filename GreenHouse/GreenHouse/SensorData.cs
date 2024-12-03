@@ -24,7 +24,7 @@ public class SensorData
                 Value = jsonDoc.RootElement.GetProperty("Value").GetDouble(), 
                 Timestamp = DateTimeOffset.FromUnixTimeSeconds(unixTime)
                     .AddMilliseconds(fractionalSeconds * 1000) 
-                    .DateTime,
+                    .DateTime.AddHours(1),
                 SensorID = jsonDoc.RootElement.GetProperty("SensorID").GetInt32()
             };
 
