@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+      image: greenhouse-api
+      build:
+        context: ./GreenHouse
+        dockerfile: Dockerfile
+      ports:
+        - "5001:80"
+      depends_on:
+        - mongodb
+      environment:
+        ETHEREUM_NODE_URL: ${ETHEREUM_NODE_URL}
+        ACCOUNT_SECRET_KEY: ${ACCOUNT_SECRET_KEY}
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf 
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+
+  frontend:
+    image: greenhouse-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
