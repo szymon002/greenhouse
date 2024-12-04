@@ -2,7 +2,11 @@ import axios from 'axios';
 
 interface getSensorDataProps{
     sensorType?: string,
-    sensorId?: number
+    sensorId?: number,
+    sortOrder?: string,
+    sortBy?: string,
+    startDate?: Date,
+    endDate?: Date
 }
 
 interface ID{
@@ -36,11 +40,32 @@ const makeQueryUrl = (url: string, props: getSensorDataProps) => {
         changed = true
         url = url.concat(`sensorType=${props.sensorType.toString()}`)
     }
+    if(props.sortBy !== undefined){
+        changed ? url = url.concat("&") : url = url.concat("?")
+        changed = true
+        url = url.concat(`sortBy=${props.sortBy}`)
+    }
+    if(props.sortOrder !== undefined){
+        changed ? url = url.concat("&") : url = url.concat("?")
+        changed = true
+        url = url.concat(`sortOrder=${props.sortOrder}`)
+    }
+    if(props.startDate !== undefined){
+        changed ? url = url.concat("&") : url = url.concat("?")
+        changed = true
+        url = url.concat(`start=${props.startDate.toJSON()}`)
+    }
+    if(props.endDate !== undefined){
+        changed ? url = url.concat("&") : url = url.concat("?")
+        changed = true
+        url = url.concat(`end=${props.endDate.toJSON()}`)
+    }
     return url;
 }
 
 const getSensorData = async (props: getSensorDataProps) => {
     const url = makeQueryUrl("http://localhost:5173/api/sensordata", props)
+    console.log(url)
     const response = await axios.get<sensorData[]>(url);
     if(response.status == 200){
         return response.data;
@@ -52,7 +77,7 @@ const exportJSON = async (props: getSensorDataProps) => {
     const url = makeQueryUrl("http://localhost:5173/api/sensordata/export/json", props)
     const response = await axios.get(url)
     const jsonString = `data:text/json;chatset=utf-8,${encodeURIComponent(
-      JSON.stringify(response.data)
+        JSON.stringify(response.data)
     )}`;
     const link = document.createElement("a");
     link.href = jsonString;

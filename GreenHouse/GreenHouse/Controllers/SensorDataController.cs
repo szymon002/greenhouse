@@ -77,7 +77,7 @@ public class SensorDataController : ControllerBase
         var sort = GetSort(sortBy, sortOrder);
         var result = await _sensorDataCollection.Find(filter).Sort(sort).ToListAsync();
 
-        var csv = "SensorType,Value,Timestamp\n" + string.Join("\n", result.Select(d => $"{d.SensorType},{d.Value},{d.Timestamp}"));
+        var csv = "SensorID,SensorType,Value,Timestamp\n" + string.Join("\n", result.Select(d => $"{d.SensorID},{d.SensorType},{d.Value},{d.Timestamp}"));
 
         return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", "sensor_data.csv");
     }

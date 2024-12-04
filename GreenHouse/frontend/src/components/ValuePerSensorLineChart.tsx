@@ -10,8 +10,20 @@ interface LineChartProps{
     data: sensorData[]
 }
 
-function ValuePerSensorLineChart(props: LineChartProps) {
-      
+const getRandomColor = ( name: string) => {
+  const hash = Array.from(name)
+    .reduce((prev, char) => prev + char.charCodeAt(0), 0);
+
+  const r = (hash * 19) % 256;
+  const g = (hash * 23) % 256;
+  const b = (hash * 29) % 256;
+
+  const toHex = (value: number) => value.toString(16).padStart(2, '0');
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function ValuePerSensorLineChart(props: LineChartProps ) {
+    
   const getValuePerSensorData = () => {
     const dataset: any[] = [];
     props.sensorTypes.forEach((type) => {
@@ -19,9 +31,13 @@ function ValuePerSensorLineChart(props: LineChartProps) {
       const ids = Array.from(new Set(typearray.map((item) => item.sensorID)))
       ids.forEach((id) => {
         const idarray = typearray.filter((item) => item.sensorID == id);
+        const label = type.concat(id.toString())
+        const color = getRandomColor(label);
         dataset.push({
-          label: type.concat(id.toString()),
-          data: idarray.map((item) => item.value)
+          label: label,
+          data: idarray.map((item) => item.value),
+          backgroundColor: color,
+          borderColor: color
         })
       })
     })
@@ -43,6 +59,11 @@ function ValuePerSensorLineChart(props: LineChartProps) {
     }
     
     const options = {
+      plugins: {
+        colors : {
+          enabled: true
+        }
+      },
         responsive: true,
         scales: {
           x: {

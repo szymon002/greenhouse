@@ -10,23 +10,31 @@ enum SortField{
   Timestamp
 }
 
+interface sortSwitchField{
+  isSet: boolean,
+  order: string
+}
+
 interface sortSwitch{
-  SensorID: boolean,
-  SensorType: boolean,
-  Value: boolean,
-  Timestamp: boolean
+  SensorID: sortSwitchField,
+  SensorType: sortSwitchField,
+  Value: sortSwitchField,
+  Timestamp: sortSwitchField
 }
 
 function Home() {
   const [pureData, setPureData] = useState<sensorData[]>([])
   const [data, setData] = useState<sensorData[]>([])
-  const [selectedSensorType, setSelectedSensorType] = useState<string | undefined>(undefined);
-  const [selectedSensorID, setSelectedSensorID] = useState<number | undefined>(undefined);
+  const [tableData, setTableData] = useState<sensorData[]>([])
+  const selectedSensorType = useRef<string | undefined>(undefined);
+  const selectedSensorID = useRef<number | undefined>(undefined);
+  const startDate = useRef<Date | undefined>(undefined);
+  const endDate = useRef<Date | undefined>(undefined);
   const sortSwitch = useRef<sortSwitch>({
-    SensorID: false,
-    SensorType: false,
-    Value: false,
-    Timestamp: false
+    SensorID: {isSet:false, order:"asc"},
+    SensorType: {isSet:false, order:"asc"},
+    Value: {isSet:false, order:"asc"},
+    Timestamp: {isSet:false, order:"asc"}
   })
   
   let sensorIds = new Set(pureData.map((item) => item.sensorID))
@@ -40,6 +48,7 @@ function Home() {
     try{
       const responseData:sensorData[] = await getSensorData({});
       setData(responseData);
+      setTableData(responseData)
       setPureData(responseData);
     } catch (e){
       console.log(e);
@@ -49,8 +58,9 @@ function Home() {
   const getFilterData = async () => {
     try{
       const responsePureData:sensorData[] = await getSensorData({});
-      const responseData:sensorData[] = await getSensorData({sensorId: selectedSensorID, sensorType: selectedSensorType});
+      const responseData:sensorData[] = await getSensorData({sensorId: selectedSensorID.current, sensorType: selectedSensorType.current, startDate: startDate.current, endDate: endDate.current});
       setData(responseData);
+      setTableData(responseData)
       setPureData(responsePureData); 
     } catch (e){
       console.log(e);
@@ -58,12 +68,24 @@ function Home() {
   }
   
   const handleSensorTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedSensorType(event.target.value);
+    selectedSensorType.current = event.target.value;
   };
 
   const handleSensorIDChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedSensorID(parseInt(event.target.value, 10));
+    selectedSensorID.current = parseInt(event.target.value, 10);
   };
+  
+  const handleStartDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const date = new Date(event.target.value)
+    date.setHours(date.getHours()+1)
+    startDate.current = date
+    console.log(startDate.current.toISOString())
+  }
+  const handleEndDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const date = new Date(event.target.value)
+    date.setHours(date.getHours()+1)
+    endDate.current = date   
+  }
    
   const submitFilter = async () => {
     getFilterData()
@@ -82,52 +104,89 @@ function Home() {
         item.checked = false;
       }
     })
-    setSelectedSensorID(undefined)
-    setSelectedSensorType(undefined)
+    const start = document.getElementById("startdate") as HTMLInputElement
+    const end = document.getElementById("enddate") as HTMLInputElement
+    start.value = ""
+    end.value = ""
+    selectedSensorType.current = undefined
+    selectedSensorID.current = undefined
     getData()
   }
   
-  const sortBy = (field: SortField) => {
-    const sortedData = [...data];
+  const setSwitch = (field: SortField) => {
     switch (field) {
       case SortField.SensorID:
-        if(sortSwitch.current.SensorID){
-          sortedData.sort((a,b) => b.sensorID-a.sensorID)
-          sortSwitch.current.SensorID = !sortSwitch.current.SensorID
-          break;          
-        }
-        sortedData.sort((a,b) => a.sensorID-b.sensorID)
-        sortSwitch.current.SensorID = !sortSwitch.current.SensorID
+        sortSwitch.current.SensorID.isSet = true
+        sortSwitch.current.SensorType.isSet = false
+        sortSwitch.current.Timestamp.isSet = false
+        sortSwitch.current.Value.isSet = false
         break;
-      case SortField.SensorType:
-        if(sortSwitch.current.SensorType){
-          sortedData.sort((a,b) => b.sensorType.localeCompare(a.sensorType))
-          sortSwitch.current.SensorType = !sortSwitch.current.SensorType
-          break;          
-        }
-        sortedData.sort((a,b) => a.sensorType.localeCompare(b.sensorType))
-        sortSwitch.current.SensorType = !sortSwitch.current.SensorType
+        case SortField.SensorType:
+        sortSwitch.current.SensorID.isSet = false
+        sortSwitch.current.SensorType.isSet = true
+        sortSwitch.current.Timestamp.isSet = false
+        sortSwitch.current.Value.isSet = false        
         break;
-      case SortField.Timestamp:
-        if(sortSwitch.current.Timestamp){
-          sortedData.sort((a,b) => new Date(b.timestamp).getTime()-new Date(a.timestamp).getTime())
-          sortSwitch.current.Timestamp = !sortSwitch.current.Timestamp
-          break;          
-        }
-        sortedData.sort((a,b) => new Date(a.timestamp).getTime()-new Date(b.timestamp).getTime())
-        sortSwitch.current.Timestamp = !sortSwitch.current.Timestamp
+        case SortField.Timestamp:
+        sortSwitch.current.SensorID.isSet = false
+        sortSwitch.current.SensorType.isSet = false
+        sortSwitch.current.Timestamp.isSet = true
+        sortSwitch.current.Value.isSet = false        
         break;
-      case SortField.Value:
-        if(sortSwitch.current.Value){
-          sortedData.sort((a,b) => b.value-a.value)
-          sortSwitch.current.Value = !sortSwitch.current.Value
-          break;          
-        }
-        sortedData.sort((a,b) => a.value-b.value)
-        sortSwitch.current.Value = !sortSwitch.current.Value
+        case SortField.Value:
+        sortSwitch.current.SensorID.isSet = false
+        sortSwitch.current.SensorType.isSet = false
+        sortSwitch.current.Timestamp.isSet = false
+        sortSwitch.current.Value.isSet = true        
         break;
     }
-    setData(sortedData);
+  }
+  
+  const sortBy = (field: SortField) => {
+    const sortedData = [...tableData];
+    switch (field) {
+      case SortField.SensorID:
+        setSwitch(field)
+        if(!sortSwitch.current.SensorID.isSet){
+          sortedData.sort((a,b) => b.sensorID-a.sensorID)          
+          sortSwitch.current.SensorID.order = "desc"
+          break;          
+        }
+        sortedData.sort((a,b) => a.sensorID-b.sensorID)        
+        sortSwitch.current.SensorID.order = "asc"
+        break;
+      case SortField.SensorType:
+        setSwitch(field)
+        if(!sortSwitch.current.SensorType.isSet){
+          sortedData.sort((a,b) => b.sensorType.localeCompare(a.sensorType))          
+          sortSwitch.current.SensorType.order = "desc"
+          break;          
+        }
+        sortedData.sort((a,b) => a.sensorType.localeCompare(b.sensorType))        
+        sortSwitch.current.SensorType.order = "asc"
+        break;
+      case SortField.Timestamp:
+        setSwitch(field)
+        if(!sortSwitch.current.Timestamp.isSet){
+          sortedData.sort((a,b) => new Date(b.timestamp).getTime()-new Date(a.timestamp).getTime())          
+          sortSwitch.current.Timestamp.order = "desc"
+          break;          
+        }
+        sortedData.sort((a,b) => new Date(a.timestamp).getTime()-new Date(b.timestamp).getTime())        
+        sortSwitch.current.Timestamp.order = "asc"
+        break;
+      case SortField.Value:
+        setSwitch(field)
+        if(!sortSwitch.current.Value.isSet){
+          sortedData.sort((a,b) => b.value-a.value)          
+          sortSwitch.current.Value.order = "desc"
+          break;          
+        }
+        sortedData.sort((a,b) => a.value-b.value)        
+        sortSwitch.current.Value.order = "asc"
+        break;
+    }
+    setTableData(sortedData);
   }
   
   const renderFirstRow = () => {
@@ -181,12 +240,43 @@ function Home() {
             <label htmlFor={`sensorID-${item}`}>{item}</label>
           </div>
         ))}
+        <div className="flex flex-row">
+          <div>
+            Start date:
+            <input id="startdate" type="datetime-local" onChange={handleStartDateChange}/>
+            End date:
+            <input id="enddate" type="datetime-local" onChange={handleEndDateChange}/>
+          </div>
+        </div>
         <button onClick={submitFilter}>Submit</button>
         <button onClick={resetRadios}>Reset</button>
       </div>
     )
   }
 
+  const getExportProps = () => {
+    const sensorId = selectedSensorID.current
+    const sensorType = selectedSensorType.current
+    let sortBy = undefined
+    let sortOrder = undefined
+    if(sortSwitch.current.SensorID.isSet){
+      sortOrder = sortSwitch.current.SensorID.order
+      sortBy = "sensorid"      
+    }
+    if(sortSwitch.current.SensorType.isSet){
+      sortOrder = sortSwitch.current.SensorType.order
+      sortBy = "sensortype"      
+    }
+    if(sortSwitch.current.Timestamp.isSet){
+      sortOrder = sortSwitch.current.Timestamp.order
+      sortBy = "timestamp"      
+    }
+    if(sortSwitch.current.Value.isSet){
+      sortOrder = sortSwitch.current.Value.order
+      sortBy = "value"      
+    }
+    return {sensorId: sensorId, sensorType: sensorType, sortBy: sortBy, sortOrder: sortOrder, startDate: startDate.current, endDate: endDate.current}
+  }
 
   return (
     <>
@@ -206,10 +296,10 @@ function Home() {
         <div>
           {renderCheckList()}
           {renderFirstRow()}
-          {data.map((item, index) => renderItem(item, index))}
+          {tableData.map((item, index) => renderItem(item, index))}
         </div>
-        <button onClick={() => exportJSON({sensorId: selectedSensorID, sensorType: selectedSensorType})}>Download in JSON</button>
-        <button onClick={() => exportCSV({sensorId: selectedSensorID, sensorType: selectedSensorType})}>Download in csv</button>
+        <button onClick={() => exportJSON(getExportProps())}>Download in JSON</button>
+        <button onClick={() => exportCSV(getExportProps())}>Download in csv</button>
       </div>
     </>
   )
