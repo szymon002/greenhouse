@@ -66,11 +66,14 @@ namespace GreenHouse.Services
                 var sensorKey = entry.Key;
                 var sensorType = sensorKey.Item1;
                 var sensorId = sensorKey.Item2;
+                var lastValue = 0.0;
+                var averageValue = 0.0;
+                if(entry.Value.Count!=0)
+                {
+                    lastValue = entry.Value.Last();
 
-                var lastValue = entry.Value.Last();
-
-                var averageValue = entry.Value.Average();
-
+                    averageValue = entry.Value.Average();
+                }
                 var sensorMessage = new
                 {
                     SensorType = sensorType,
