@@ -35,29 +35,39 @@ function Board() {
 
   }, []);
     
-    const render = () => {
-      return (
-          <>
-              {data.map((item) => (
-                  <div
-                      className="flex flex-row"
-                      key={item.SensorType.concat(item.SensorID.toString())}
-                  >
-                      <div>Name: {item.SensorType.concat(item.SensorID.toString())}</div>
-                      <div>Value: {item.LastValue}</div>
-                      <div>Average value: {item.AverageValue}</div>
-                  </div>
-              ))}
-          </>
-      );
-  };
-    
+  const renderFirstRow = () => {
     return (
-        <div>
-            Board
-            {render()}
+      <div className="flex flex-row bg-gray-800 text-white rounded-t-lg">
+        <div className="h-10 w-[150px] p-2 font-bold border-b-2 border-gray-700">Sensor Name</div>
+        <div className="h-10 w-[120px] p-2 font-bold border-b-2 border-gray-700">Last Value</div>
+        <div className="h-10 w-[150px] p-2 font-bold border-b-2 border-gray-700">Average Value</div>
+      </div>
+    );
+};
+
+const renderItem = (item: socketData, index: any) => {
+    return (
+      <div className={`flex flex-row ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`} key={index}>
+        <div className="h-10 w-[150px] p-2 border-b border-gray-300">{item.SensorType.concat(item.SensorID.toString())}</div>
+        <div className="h-10 w-[120px] p-2 border-b border-gray-300">{item.LastValue}</div>
+        <div className="h-10 w-[150px] p-2 border-b border-gray-300">{item.AverageValue}</div>
+      </div>
+    );
+};
+
+return (
+    <div className="w-full h-screen p-6 bg-gray-100 flex justify-center items-center">
+        <div className="bg-white shadow-lg rounded-lg p-6 w-[500px]">
+            <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Sensor Board</h1>
+            <div className="bg-white shadow-md rounded-lg">
+              {renderFirstRow()}
+              <div className="divide-y divide-gray-200">
+                {data.map((item, index) => renderItem(item, index))}
+              </div>
+            </div>
         </div>
-    )
+    </div>
+);
 }
 
 export default Board

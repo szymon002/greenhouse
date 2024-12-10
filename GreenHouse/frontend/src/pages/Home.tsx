@@ -140,6 +140,7 @@ function Home() {
         sortSwitch.current.Value.isSet = true        
         break;
     }
+    console.log(sortSwitch.current)
   }
   
   const sortBy = (field: SortField) => {
@@ -147,7 +148,7 @@ function Home() {
     switch (field) {
       case SortField.SensorID:
         setSwitch(field)
-        if(!sortSwitch.current.SensorID.isSet){
+        if(sortSwitch.current.SensorID.order == "asc"){
           sortedData.sort((a,b) => b.sensorID-a.sensorID)          
           sortSwitch.current.SensorID.order = "desc"
           break;          
@@ -157,7 +158,7 @@ function Home() {
         break;
       case SortField.SensorType:
         setSwitch(field)
-        if(!sortSwitch.current.SensorType.isSet){
+        if(sortSwitch.current.SensorType.order == "asc"){
           sortedData.sort((a,b) => b.sensorType.localeCompare(a.sensorType))          
           sortSwitch.current.SensorType.order = "desc"
           break;          
@@ -167,7 +168,7 @@ function Home() {
         break;
       case SortField.Timestamp:
         setSwitch(field)
-        if(!sortSwitch.current.Timestamp.isSet){
+        if(sortSwitch.current.Timestamp.order == "asc"){
           sortedData.sort((a,b) => new Date(b.timestamp).getTime()-new Date(a.timestamp).getTime())          
           sortSwitch.current.Timestamp.order = "desc"
           break;          
@@ -177,7 +178,7 @@ function Home() {
         break;
       case SortField.Value:
         setSwitch(field)
-        if(!sortSwitch.current.Value.isSet){
+        if(sortSwitch.current.Value.order == "asc"){
           sortedData.sort((a,b) => b.value-a.value)          
           sortSwitch.current.Value.order = "desc"
           break;          
@@ -191,65 +192,83 @@ function Home() {
   
   const renderFirstRow = () => {
     return (
-      <div className="flex flex-row">
-        <div className="bg-slate-400 h-6 w-[60px] p-1">
-          ID
-          <button className="pl-2" onClick={() => sortBy(SortField.SensorID)}>sort</button>
+      <div className="flex flex-row bg-gray-800 text-white rounded-t-lg">
+        <div className="h-10 w-[90px] p-2 font-bold border-b-2 border-gray-700 flex items-center justify-between">
+          <span>ID</span>
+          <button onClick={() => sortBy(SortField.SensorID)}>
+            Sort
+          </button>
         </div>
-        <div className="bg-slate-300 h-6 w-[180px] p-1">
-          Sensor type
-          <button className="pl-2" onClick={() => sortBy(SortField.SensorType)}>sort</button>
+        <div className="h-10 w-[180px] p-2 font-bold border-b-2 border-gray-700 flex items-center justify-between">
+          <span>Sensor Type</span>
+          <button onClick={() => sortBy(SortField.SensorType)}>
+            Sort
+          </button>
         </div>
-        <div className="bg-slate-400 h-6 w-[130px] p-1">
-          Value
-          <button className="pl-2" onClick={() => sortBy(SortField.Value)}>sort</button>
+        <div className="h-10 w-[130px] p-2 font-bold border-b-2 border-gray-700 flex items-center justify-between">
+          <span>Value</span>
+          <button onClick={() => sortBy(SortField.Value)}>
+            Sort
+          </button>
         </div>
-        <div className="bg-slate-300 h-6 w-[250px] p-1">
-          Timestamp
-          <button className="pl-2" onClick={() => sortBy(SortField.Timestamp)}>sort</button>
+        <div className="h-10 w-[250px] p-2 font-bold border-b-2 border-gray-700 flex items-center justify-between">
+          <span>Timestamp</span>
+          <button onClick={() => sortBy(SortField.Timestamp)}>
+            Sort
+          </button>
         </div>
       </div>
-    )
+    );
   };
-  
-  const renderItem = (item:sensorData, index: any) => {
+
+  const renderItem = (item: sensorData, index: any) => {
     return (
-      <div className="flex flex-row" key={index}>
-        <div className="bg-slate-400 h-6 w-[60px] p-1">{item.sensorID}</div>
-        <div className="bg-slate-300 h-6 w-[180px] p-1">{item.sensorType}</div>
-        <div className="bg-slate-400 h-6 w-[130px] p-1">{item.value}</div>
-        <div className="bg-slate-300 h-6 w-[250px] p-1">{item.timestamp.toString()}</div>
+      <div className={`flex flex-row ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`} key={index}>
+        <div className="h-10 w-[90px] p-2 border-b border-gray-300">{item.sensorID}</div>
+        <div className="h-10 w-[180px] p-2 border-b border-gray-300">{item.sensorType}</div>
+        <div className="h-10 w-[130px] p-2 border-b border-gray-300">{item.value}</div>
+        <div className="h-10 w-[250px] p-2 border-b border-gray-300">{new Date(item.timestamp).toLocaleString()}</div>
       </div>
-    )
+    );
   };
   
   const renderCheckList = () => {
     return (
-      <div>
-        Sensor type:
-        {Array.from(sensorTypes).map((item, index) => (
-          <div key={index}>
-            <input type="radio" name="sensorType" id={item} value={item} onChange={handleSensorTypeChange}/>
-            <label htmlFor={item}>{item}</label>
-          </div>
-        ))}
-        Sensor ID:
-        {Array.from(sensorIds).map((item, index) => (
-          <div key={index}>
-            <input type="radio" name="sensorID" id={`sensorID-${item}`} value={`${item}`} onChange={handleSensorIDChange}/>
-            <label htmlFor={`sensorID-${item}`}>{item}</label>
-          </div>
-        ))}
-        <div className="flex flex-row">
+      <div className="bg-white p-4 rounded-md shadow-md">
+        <div className="mb-4">
+          <span className="font-bold">Sensor type:</span>
+          {Array.from(sensorTypes).map((item, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <input type="radio" name="sensorType" id={item} value={item} onChange={handleSensorTypeChange} className="accent-blue-500"/>
+              <label htmlFor={item} className="text-gray-700">{item}</label>
+            </div>
+          ))}
+        </div>
+        <div className="mb-4">
+          <span className="font-bold">Sensor ID:</span>
+          {Array.from(sensorIds).map((item, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <input type="radio" name="sensorID" id={`sensorID-${item}`} value={`${item}`} onChange={handleSensorIDChange} className="accent-blue-500"/>
+              <label htmlFor={`sensorID-${item}`} className="text-gray-700">{item}</label>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-row space-x-4 mb-4">
           <div>
-            Start date:
-            <input id="startdate" type="datetime-local" onChange={handleStartDateChange}/>
-            End date:
-            <input id="enddate" type="datetime-local" onChange={handleEndDateChange}/>
+            <span className="font-bold">Start date:</span>
+            <input id="startdate" type="datetime-local" onChange={handleStartDateChange} className="border border-gray-300 rounded p-1 mt-1 block w-full"/>
+          </div>
+          <div>
+            <span className="font-bold">End date:</span>
+            <input id="enddate" type="datetime-local" onChange={handleEndDateChange} className="border border-gray-300 rounded p-1 mt-1 block w-full"/>
           </div>
         </div>
-        <button onClick={submitFilter}>Submit</button>
-        <button onClick={resetRadios}>Reset</button>
+        <div className="flex space-x-4">
+          <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={submitFilter}>Submit</button>
+          <button className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" onClick={resetRadios}>Reset</button>
+          <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" onClick={() => exportJSON(getExportProps())}>Download JSON</button>
+          <button className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" onClick={() => exportCSV(getExportProps())}>Download CSV</button>
+        </div>
       </div>
     )
   }
@@ -280,27 +299,28 @@ function Home() {
 
   return (
     <>
-      <div className='w-full h-[200px] bg-white'>
-        <div
-         className="flex flex-row w-full"
-        >
-          <ValuePerSensorLineChart
-            sensorTypes={Array.from(sensorTypes)}
-            data={data}
-          />
-          <CountPerSensorBarChart
-           sensorTypes={Array.from(sensorTypes)}
-           data={data}
-          />
+       <div className="w-full h-screen p-6 bg-gray-100">
+      <div className='bg-white shadow-md rounded-lg p-6'>
+        <h1 className='text-2xl font-bold mb-6'>Sensor Dashboard</h1>
+        <div className="flex flex-row space-x-4">
+          <ValuePerSensorLineChart sensorTypes={Array.from(sensorTypes)} data={data} />
+          <CountPerSensorBarChart sensorTypes={Array.from(sensorTypes)} data={data} />
         </div>
-        <div>
-          {renderCheckList()}
-          {renderFirstRow()}
-          {tableData.map((item, index) => renderItem(item, index))}
-        </div>
-        <button onClick={() => exportJSON(getExportProps())}>Download in JSON</button>
-        <button onClick={() => exportCSV(getExportProps())}>Download in csv</button>
       </div>
+      <div className='bg-white shadow-md rounded-lg p-6 mt-6 flex'>
+        {renderCheckList()}
+        <div className="mt-4 mb-4 flex space-x-4">
+         
+        </div>
+        <div className="mb-4 ml-4">
+          {renderFirstRow()}
+          <div>
+            {tableData.map((item, index) => renderItem(item, index))}
+          </div>          
+        </div>
+       
+      </div>
+    </div>
     </>
   )
 }
